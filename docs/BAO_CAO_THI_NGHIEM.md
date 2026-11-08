@@ -489,7 +489,7 @@ Theo từng fold: 4,661 / 5,161 / 4,962 / 4,679 / 4,344. TabPFN tốt hơn mô h
 | LightGBM L2 | 0,132 |
 | MLP | 0,063 |
 
-**Submission sub10** (`sub10_gbm_mlp_tabpfn_v6.csv`): ZIP đã biết giữ như sub08/sub09. Dự kiến public ≈ 4,415 − 0,8 × 0,245 ≈ **4,22**.
+**Submission sub10** (`sub10_gbm_mlp_tabpfn_v6.csv`): ZIP đã biết giữ như sub08/sub09. Dự kiến public ≈ 4,415 − 0,8 × 0,245 ≈ **4,22**. **Public LB thật: 4,047** (giảm 0,368 so với sub09, tốt hơn kỳ vọng; vẫn nằm trong biên nhiễu ±0,3 của public).
 
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
