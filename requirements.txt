@@ -1,0 +1,11 @@
+numpy==2.5.4
+pandas==3.1.1
+scipy==1.18.1
+scikit-learn==1.9.1
+lightgbm==4.7.0
+xgboost==3.4.1
+catboost==1.2.10
+optuna==5.0.0
+matplotlib==3.11.2
+pgeocode==0.5.0
+statsmodels==0.15.0

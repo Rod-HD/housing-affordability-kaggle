@@ -1,0 +1,26 @@
+# environment / secrets
+.venv/
+.env
+__pycache__/
+*.pyc
+
+# competition data (Kaggle rules: do not redistribute) and downloaded external data
+data/
+external/
+*.zip
+
+# generated artefacts (keep only figures and small summaries)
+outputs/*
+!outputs/figures/
+!outputs/*_summary.csv
+!outputs/known_zip_results.csv
+!outputs/seen_zillow_results.csv
+!outputs/calibration_results.csv
+!outputs/error_by_band.csv
+submissions/
+
+/Bao_cao_phan_tich_Housing_Affordability_Tieng_Viet.pdf
+/BAO_CAO_THI_NGHIEM.md
+
+# model training logs
+catboost_info/
