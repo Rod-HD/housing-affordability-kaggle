@@ -293,7 +293,7 @@ Sau sub06 (public 9,435), top 1 đạt 3,685. Với Final = 0,2 × RMSE_seen + 0
 | **Zillow ZHVI theo ZIP** (giá nhà điển hình, theo tháng; cuộc thi trích dẫn Zillow Research) | files.zillowstatic.com ✓ | log(ZHVI / thu nhập): **−0,950** | **Đột phá** |
 | Zillow ZHVI raw (chưa làm trơn/mùa vụ) | ✓ | −0,951; isotonic 1 chiều RMSE 8,56 (so với 8,64 bản sm_sa) | Tốt hơn một chút |
 | Zillow ZHVI phân khúc thấp/cao, nhà riêng, căn hộ, 1–5 phòng ngủ | ✓ | −0,86 đến −0,93 | Phụ trợ |
-| Census ACS B25106 (gánh nặng chi phí theo ZCTA) | api.census.gov / www2.census.gov **bị chặn** (Cloudflare chặn IP Việt Nam); qua proxy thì cần API key | — | Chưa dùng được |
+| Census ACS B25106 (gánh nặng chi phí theo ZCTA) | api.census.gov bị chặn trực tiếp; dùng API key + proxy r.jina.ai ✓ (`src/download_census.py`) | +0,547 | Không cải thiện thêm |
 | CDC PLACES SDOH theo ZCTA (ACS 2017–21: HCOST, CROWD, POV150…) | data.cdc.gov bị chặn, tải qua proxy r.jina.ai ✓ | HCOST: −0,28; CROWD: −0,32 | Gain nhỏ (định nghĩa khác: chỉ hộ < 75 nghìn USD) |
 | **IRS SOI theo ZIP** (số tờ khai theo 6 khoảng AGI, lãi vay mua nhà, thuế BĐS) | irs.gov ✓ | Tỷ lệ hộ có thu nhập vượt (chi phí trả góp / 0,3): +0,84 | Gain nhỏ |
 
@@ -314,6 +314,7 @@ Sau sub06 (public 9,435), top 1 đạt 3,685. Với Final = 0,2 × RMSE_seen + 0
 | ZG: + nội suy ZHVI + GWR | 5,173 | 5,261 | 5,140 | — |
 | ZS: + ZHVI raw + SDOH | 5,108 | 5,252 | 5,124 | — |
 | **ZI: + IRS** | 5,125 | 5,213 | **5,094** | **5,070** |
+| ZIA: + Census ACS B25106 (tỷ lệ hộ không bị gánh nặng theo ZCTA, Spearman +0,55) | 5,136 | 5,226 | 5,113 | — (không cải thiện) |
 
 Các thử nghiệm phụ:
 - Mô hình cấu trúc tham số (25 tham số, `src/structural_model.py`): RMSE đứng riêng 10,58, **trọng số 0** khi blend.
