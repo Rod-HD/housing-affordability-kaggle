@@ -49,6 +49,14 @@ def get_models(seed=0):
         "lgb_slow": lambda: lgb.LGBMRegressor(n_estimators=2500, learning_rate=0.01, num_leaves=31, min_child_samples=30,
                                               subsample=0.7, subsample_freq=1, colsample_bytree=0.5, reg_lambda=5,
                                               verbose=-1, n_jobs=4, random_state=seed),
+        "lgb_slow_h": lambda: lgb.LGBMRegressor(objective="huber", alpha=12.0, n_estimators=2500, learning_rate=0.01, num_leaves=31,
+                                                min_child_samples=30, subsample=0.7, subsample_freq=1, colsample_bytree=0.5,
+                                                reg_lambda=5, verbose=-1, n_jobs=4, random_state=seed),
+        "lgb_h": lambda: lgb.LGBMRegressor(objective="huber", alpha=12.0, n_estimators=800, learning_rate=0.03, num_leaves=31,
+                                           min_child_samples=20, subsample=0.8, subsample_freq=1, colsample_bytree=0.8,
+                                           verbose=-1, n_jobs=4, random_state=seed),
+        "cat_h": lambda: CatBoostRegressor(iterations=1500, learning_rate=0.04, depth=6, l2_leaf_reg=3, loss_function="Huber:delta=12",
+                                           verbose=0, random_seed=seed, thread_count=8),
         "et": lambda: make_pipeline(SimpleImputer(strategy="median"),
                                     ExtraTreesRegressor(500, min_samples_leaf=3, max_features=0.5, n_jobs=8, random_state=seed)),
     }
@@ -93,13 +101,16 @@ def fit_predict(train_rows, ref_rows, query_rows, model_names, seed=0, extra_tra
     models = models or get_models(seed)
     out = {}
     for name in model_names:
-        base = name[:-6] if name.endswith("_resid") else name
+        weighted = name.endswith("_w")                     # sample weight sqrt(SampleSize): noisier small-sample labels count less
+        core = name[:-2] if weighted else name
+        base = core[:-6] if core.endswith("_resid") else core
         m = models[base]()
-        if name.endswith("_resid"):  # learn the residual w.r.t. the distance-weighted neighbour mean
+        w = np.sqrt(Xtr["SampleSize"].clip(lower=100).values) if weighted else None
+        if core.endswith("_resid"):  # learn the residual w.r.t. the distance-weighted neighbour mean
             anchor_tr, anchor_q = Xtr["geo10_idw"].values, Xq["geo10_idw"].values
-            m.fit(Xtr[cols], ytr - anchor_tr)
+            m.fit(Xtr[cols], ytr - anchor_tr, sample_weight=w)
             out[name] = np.clip(anchor_q + m.predict(Xq[cols]), 0, 100)
         else:
-            m.fit(Xtr[cols], ytr)
+            m.fit(Xtr[cols], ytr, sample_weight=w)
             out[name] = np.clip(m.predict(Xq[cols]), 0, 100)
     return out, cols

@@ -416,6 +416,43 @@ v6 giữ nguyên nhãn tháng 6. v7 điều chỉnh theo thay đổi giá nhà t
 | Đặc trưng log-normal kết hợp (thu nhập × giá nhà, σ từ IRS và độ chênh phân khúc) | 5,106 | Không giúp |
 | Ablation: bỏ bất kỳ nhóm đặc trưng nào | +0,001 đến +0,93 | Giữ đủ 152 đặc trưng |
 
+## 10e. Nghiên cứu tiếp sau sub07 → sub08
+
+### Giả thuyết đã kiểm tra
+| Giả thuyết | Cách làm | Kết quả (RMSE ZIP mới, lgb_slow; sub07 = 5,094) |
+|---|---|---|
+| Sai số tập trung ở ZIP nhiều người thuê vì thiếu **thu nhập riêng của người thuê/chủ sở hữu** | ACS B25119 (thu nhập theo tenure), B19001 (16 khoảng thu nhập), B25071/B25092 (chi phí % thu nhập), B25088, B25081 (tỷ lệ có khoản vay), B25077, B25064. Ghép với Zillow: gánh nặng người thuê theo thu nhập người thuê, tỷ lệ hộ có thu nhập vượt chi phí/0,3 (Spearman +0,939) | 5,112: **không giúp**, vì trùng thông tin với log(ZHVI/thu nhập) |
+| Chi phí chủ sở hữu tính theo **giá lúc mua + lãi suất năm mua** | ZHVI lịch sử theo năm (1996–2026) tại năm (2026 − số năm cư trú), lãi suất Freddie Mac PMMS từng năm | Spearman −0,86 < −0,95 (giá hiện tại) → target dùng giá **hiện tại**. Dùng làm đặc trưng phụ: 5,087 (−0,007) |
+| Phần dư còn tương quan với biến nào? | Spearman của phần dư với khoảng 200 biến | Tất cả \|r\| ≤ 0,08 → tín hiệu đã khai thác gần hết |
+| Nhãn của ZIP ít hộ bị nhiễu, làm lệch quá trình học | Trọng số mẫu và loss Huber, vẫn đánh giá bằng RMSE không trọng số | **Có cải thiện**, xem bảng dưới |
+
+### Trọng số mẫu và loss bền vững (LightGBM, cùng 5 fold)
+| Cách học | RMSE |
+|---|---|
+| L2, không trọng số (gốc) | 5,0987 |
+| L2, trọng số √SampleSize | 5,0586 |
+| L2, trọng số log(SampleSize) | 5,0857 |
+| L2, trọng số min(S, 3000)/3000 | 5,0638 |
+| L2, trọng số S^0,75 | 5,0576 |
+| L2, trọng số S | 5,0603 |
+| Huber α = 6 | 5,0722 |
+| Huber α = 12 | 5,0618 |
+| **Huber α = 12 + trọng số √SampleSize** | **5,0267** |
+| Huber α = 20 + trọng số √SampleSize | 5,0517 |
+| CatBoost Huber δ = 12 + trọng số | 6,280 (hội tụ kém, loại) |
+
+Giải thích: ZIP ít hộ có nhãn kém ổn định. Trọng số √n tương ứng với độ chính xác của một tỷ lệ ước lượng từ n hộ. Loss Huber giảm ảnh hưởng của các ca cực đoan (ZIP trung tâm đô thị) lên những vùng mà mô hình học tốt.
+
+### Ensemble sub08 (NNLS, kiểm định lồng)
+| Mô hình | Trọng số |
+|---|---|
+| lgb_slow, Huber α = 12, trọng số √SampleSize | 0,626 |
+| LightGBM L2 | 0,213 |
+| CatBoost L2, trọng số √SampleSize | 0,161 |
+| **RMSE ensemble ZIP mới** | **5,016** (sub07: 5,070) |
+
+Đặc trưng: như sub07, cộng thêm 11 đặc trưng chi phí theo năm mua (tổng cộng 163). ZIP đã biết giữ nguyên như sub07. Dự kiến public ≈ 4,473 − 0,8 × 0,054 ≈ **4,43**.
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.

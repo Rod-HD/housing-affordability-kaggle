@@ -372,6 +372,100 @@ def add_acs(d):
     return d
 
 
+ACSX_PATH = os.path.join(ROOT, "external", "acs_extra_zcta.csv")
+_ACS_EDGES = np.array([1, 10e3, 15e3, 20e3, 25e3, 30e3, 35e3, 40e3, 45e3, 50e3, 60e3, 75e3, 100e3, 125e3, 150e3, 200e3])
+
+
+def _acs_frac_above(S, t):
+    """Share of households with income >= t from the 16 ACS B19001 brackets (log-linear within, Pareto a=2 on top)."""
+    t = np.asarray(t, float); above = np.zeros(len(t))
+    for k in range(16):
+        lo = _ACS_EDGES[k]
+        if k < 15:
+            hi = _ACS_EDGES[k + 1]
+            fr = np.clip((np.log(hi) - np.log(np.clip(t, lo, hi))) / (np.log(hi) - np.log(lo)), 0, 1)
+        else:
+            fr = np.where(t <= lo, 1.0, (lo / np.maximum(t, lo)) ** 2.0)
+        above += S[:, k] * fr
+    return above
+
+
+def add_acs_extra(d):
+    """EXTERNAL DATA: ACS 5-yr tenure-specific incomes/costs + income distribution (src/download_census_extra.py).
+    Requires add_zillow first."""
+    a = pd.read_csv(ACSX_PATH)
+    d = d.merge(a, on="Zip", how="left")
+    r = 0.068 / 12; pi_fac = r / (1 - (1 + r) ** -360)
+    V = d["zhvi_raw"].fillna(d["zhvi_f"]) if "zhvi_raw" in d else d["zhvi_f"]
+    rent = d["RentIndex"].fillna(d["zori_z"]).fillna(d["acs_rent"])
+    own_annual = 12 * V * (0.8 * pi_fac + 0.015 / 12)
+    o = d["OwnerPercent"] / 100
+    d["acsx_rent_burden_renterinc"] = 12 * rent / d["acs_inc_renter"]
+    d["acsx_own_burden_ownerinc"] = own_annual / d["acs_inc_owner"]
+    d["acsx_log_pti_ownerinc"] = np.log(V / d["acs_inc_owner"])
+    d["acsx_renter_inc_ratio"] = d["acs_inc_renter"] / d["AnnualMedianHouseholdIncome"]
+    d["acsx_owner_inc_ratio"] = d["acs_inc_owner"] / d["AnnualMedianHouseholdIncome"]
+    d["acsx_zhvi_vs_acsvalue"] = np.log(V / d["acs_value"])
+    # mortgage-free owners only pay tax+insurance; owners with a mortgage pay P&I too
+    m = d["acs_mortgage_share"].fillna(0.6)
+    own_cost_mix = 12 * V * (m * 0.8 * pi_fac + 0.015 / 12)
+    d["acsx_own_burden_mortmix"] = own_cost_mix / d["acs_inc_owner"]
+    S = d[[f"acs_incb{i:02d}" for i in range(2, 18)]].values
+    ok = ~np.isnan(S).any(1)
+    new = [c for c in a.columns if c != "Zip"] + ["acsx_rent_burden_renterinc", "acsx_own_burden_ownerinc", "acsx_log_pti_ownerinc",
+                                                  "acsx_renter_inc_ratio", "acsx_owner_inc_ratio", "acsx_zhvi_vs_acsvalue",
+                                                  "acsx_own_burden_mortmix"]
+    for name, cost in [("own", own_annual), ("own_mortmix", own_cost_mix), ("rent", 12 * rent)]:
+        for mult in (1.0, 1.4):
+            v = np.full(len(d), np.nan)
+            okk = ok & cost.notna().values
+            v[okk] = _acs_frac_above(S[okk], cost.values[okk] * mult / 0.3)
+            d[f"acsx_ok_{name}_m{mult}"] = 100 * v; new.append(f"acsx_ok_{name}_m{mult}")
+    d["acsx_ok_mix"] = o * d["acsx_ok_own_mortmix_m1.0"] + (1 - o) * d["acsx_ok_rent_m1.0"].fillna(d["acsx_ok_own_mortmix_m1.0"])
+    new.append("acsx_ok_mix")
+    ZFEATS.extend([c for c in new if c not in ZFEATS])
+    return d
+
+
+# Freddie Mac PMMS 30-year fixed, annual average (%), public; 2025-2026 approximate.
+PMMS = {2000: 8.05, 2001: 6.97, 2002: 6.54, 2003: 5.83, 2004: 5.84, 2005: 5.87, 2006: 6.41, 2007: 6.34, 2008: 6.03,
+        2009: 5.04, 2010: 4.69, 2011: 4.45, 2012: 3.66, 2013: 3.98, 2014: 4.17, 2015: 3.85, 2016: 3.65, 2017: 3.99,
+        2018: 4.54, 2019: 3.94, 2020: 3.11, 2021: 2.96, 2022: 5.34, 2023: 6.81, 2024: 6.72, 2025: 6.6, 2026: 6.3}
+HIST_PATH = os.path.join(ROOT, "external", "zhvi_annual.csv")
+
+
+def _pmt(rate_pct, years=30):
+    r = np.asarray(rate_pct, float) / 1200
+    return r / (1 - (1 + r) ** (-12 * years))
+
+
+def add_hist(d):
+    """Owner cost at PURCHASE time: ZHVI of the ZIP in the year households moved in (2026 - median length of
+    residence) and the mortgage rate of that year. Uses external/zhvi_annual.csv (June value per year)."""
+    h = pd.read_csv(HIST_PATH).set_index("Zip")
+    inc = d["AnnualMedianHouseholdIncome"].values
+    L = d["MedianHomeLengthofResidence"].fillna(9).values
+    V_now = (d["zhvi_raw"].fillna(d["zhvi_f"]) if "zhvi_raw" in d else d["zhvi_f"]).values
+    new = []
+    for name, mult in (("L", 1.0), ("halfL", 0.5), ("1p5L", 1.5)):
+        yr = np.clip(np.round(2026 - L * mult), 2000, 2026).astype(int)
+        Vb = np.array([h.at[z, str(y)] if (z in h.index and str(y) in h.columns) else np.nan for z, y in zip(d["Zip"].values, yr)])
+        Vb = np.where(np.isnan(Vb), V_now, Vb)
+        rate = np.array([PMMS[y] for y in yr])
+        pay = 12 * 0.8 * Vb * _pmt(rate)
+        tax = 0.015 * V_now                                   # taxes/insurance follow today's value
+        paid_off = (L * mult) >= 30
+        d[f"hist_own_burden_{name}"] = (np.where(paid_off, 0, pay) + tax) / inc
+        d[f"hist_log_price_then_{name}"] = np.log(Vb / inc)
+        d[f"hist_rate_{name}"] = rate
+        new += [f"hist_own_burden_{name}", f"hist_log_price_then_{name}", f"hist_rate_{name}"]
+    d["hist_appreciation_L"] = np.log(V_now / np.exp(d["hist_log_price_then_L"].values) / inc)
+    d["hist_burden_now_vs_then"] = d["own_burden"] / d["hist_own_burden_L"] if "own_burden" in d else np.nan
+    new += ["hist_appreciation_L", "hist_burden_now_vs_then"]
+    ZFEATS.extend([c for c in new if c not in ZFEATS])
+    return d
+
+
 def metrics(y, p):
     y = np.asarray(y, float); p = np.asarray(p, float)
     mae = np.abs(y - p).mean()

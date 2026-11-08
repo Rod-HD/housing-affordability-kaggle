@@ -16,6 +16,10 @@ jun = tr[tr.Month == JUN].set_index("Zip").sort_index()
 jul = te[te.Zip.isin(jun.index)].set_index("Zip").loc[jun.index]; jul[T] = jun[T]
 shift = drift_table(jun.reset_index(), jul.reset_index())
 EXT = (lambda d: add_irs(add_zillow(add_geo(d)))) if os.environ.get("IRS") == "1" else (lambda d: add_zillow(add_geo(d)))
+if os.environ.get("HIST") == "1":
+    _e3 = EXT; EXT = lambda d: add_hist(_e3(d))
+if os.environ.get("ACSX") == "1":
+    _e2 = EXT; EXT = lambda d: add_acs_extra(_e2(d))
 if os.environ.get("ACS") == "1":
     _ext = EXT; EXT = lambda d: add_acs(_ext(d))
 J = EXT(jun.reset_index()).set_index("Zip")
