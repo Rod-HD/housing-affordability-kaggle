@@ -466,7 +466,7 @@ Giải thích: ZIP ít hộ có nhãn kém ổn định. Trọng số √n tươ
 
 **Ensemble GBM + MLP: RMSE kiểm định lồng 4,956** (sub08: 5,016, giảm 0,060). MLP yếu khi đứng riêng nhưng sai số của nó ít tương quan với sai số của mô hình cây (tương quan dự đoán 0,994 nhưng lệch ở các ZIP khó), nên nhận gần 1/4 trọng số. Đây là ví dụ điển hình cho việc **đa dạng họ mô hình quan trọng hơn sức mạnh của từng mô hình**.
 
-**Submission sub09** (`sub09_gbm_mlp_v5.csv`): ZIP đã biết giữ như sub08; ZIP mới = 0,506·lgb_slow_h_w + 0,191·lgb + 0,064·cat_w (3 seed, đặc trưng v4) + 0,239·MLP (5 seed, đặc trưng v3). Dự kiến public ≈ 4,421 − 0,8 × 0,06 ≈ **4,37**.
+**Submission sub09** (`sub09_gbm_mlp_v5.csv`): ZIP đã biết giữ như sub08; ZIP mới = 0,506·lgb_slow_h_w + 0,191·lgb + 0,064·cat_w (3 seed, đặc trưng v4) + 0,239·MLP (5 seed, đặc trưng v3). Dự kiến public ≈ 4,421 − 0,8 × 0,06 ≈ **4,37**. **Public LB thật: 4,415** (chỉ −0,006). Public chỉ chấm khoảng 30% test, tức khoảng 510 ZIP mới, nên sai số lấy mẫu của điểm public cỡ ±0,1; mức cải thiện 0,05 theo CV khó thấy rõ trên public.
 
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
