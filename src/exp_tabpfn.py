@@ -1,6 +1,6 @@
-"""TabPFN (tabular foundation model, Prior Labs) on the cached July-proxy folds, for comparison and ensembling.
+﻿"""TabPFN (tabular foundation model, Prior Labs) on the cached July-proxy folds, for comparison and ensembling.
 Needs TABPFN_TOKEN in .env and the license accepted at https://ux.priorlabs.ai (Licenses tab).
-Weights are cached under D:/Programs/huggingface_cache. Output: outputs/rmse_oof_TABPFN_s0.csv"""
+Weights are cached under D:/Programs/huggingface_cache. Output: outputs/rmse_oof_TABPFN{N_EST}_s0.csv"""
 import os, pickle, sys, time, warnings
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for line in open(os.path.join(ROOT, ".env"), encoding="utf8"):
@@ -28,4 +28,4 @@ for f, ((Xt, yt, Xv, yv), (a, b)) in enumerate(zip(folds, splits)):
     oof[b] = p; y_all[b] = yv
     print(f"fold {f} {time.time()-t0:.0f}s RMSE {np.sqrt(((p - yv) ** 2).mean()):.3f}", flush=True)
 print("TabPFN OOF RMSE", round(float(np.sqrt(((oof - y_all) ** 2).mean())), 4))
-pd.DataFrame({"Zip": zips, "y": y_all, "tabpfn": oof}).to_csv(f"{OUT}/rmse_oof_TABPFN_s0.csv", index=False)
+pd.DataFrame({"Zip": zips, "y": y_all, "tabpfn": oof}).to_csv(f"{OUT}/rmse_oof_TABPFN{N_EST}_s0.csv", index=False)

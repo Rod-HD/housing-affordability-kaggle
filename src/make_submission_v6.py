@@ -17,7 +17,7 @@ from nn_model import prep, mlp_fit_predict
 
 warnings.filterwarnings("ignore")
 NAME = sys.argv[1] if len(sys.argv) > 1 else "sub10_gbm_mlp_tabpfn_v6"
-W = {k.split("@")[0]: v for k, v in json.load(open(f"{OUT}/ens_weights_v6.json")).items() if v > 0.005}
+W = {k.split("@")[0]: v for k, v in json.load(open(os.environ.get("ENS_WEIGHTS", f"{OUT}/ens_weights_v6.json"))).items() if v > 0.005}
 s = sum(W.values()); W = {k: v / s for k, v in W.items()}
 print("weights:", {k: round(v, 3) for k, v in W.items()})
 EXT_GBM = lambda d: add_hist(add_irs(add_zillow(add_geo(d))))
@@ -47,7 +47,7 @@ if "mlp" in W or "tabpfn" in W:
         p_new += W["mlp"] * p_mlp; print("mlp done", flush=True)
     if "tabpfn" in W:
         from tabpfn import TabPFNRegressor
-        m = TabPFNRegressor(device="cpu", n_estimators=2, ignore_pretraining_limits=True, random_state=0)
+        m = TabPFNRegressor(device="cpu", n_estimators=int(os.environ.get("TABPFN_NEST", "2")), ignore_pretraining_limits=True, random_state=0)
         m.fit(Xt.values.astype("float32"), yt)
         p_tab = np.clip(m.predict(Xq.values.astype("float32")), 0, 100)
         p_new += W["tabpfn"] * p_tab; print("tabpfn done", flush=True)

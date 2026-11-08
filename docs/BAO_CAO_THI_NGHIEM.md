@@ -491,6 +491,30 @@ Theo từng fold: 4,661 / 5,161 / 4,962 / 4,679 / 4,344. TabPFN tốt hơn mô h
 
 **Submission sub10** (`sub10_gbm_mlp_tabpfn_v6.csv`): ZIP đã biết giữ như sub08/sub09. Dự kiến public ≈ 4,415 − 0,8 × 0,245 ≈ **4,22**. **Public LB thật: 4,047** (giảm 0,368 so với sub09, tốt hơn kỳ vọng; vẫn nằm trong biên nhiễu ±0,3 của public).
 
+## 10h. TabPFN với 8 estimator (sub11)
+
+| Fold | TabPFN 2 estimator | TabPFN 8 estimator |
+|---|---|---|
+| 0 | 4,661 | 4,507 |
+| 1 | 5,161 | 5,125 |
+| 2 | 4,962 | 4,807 |
+| 3 | 4,679 | 4,562 |
+| 4 | 4,344 | 4,289 |
+| **OOF** | 4,770 | **4,667** |
+
+Mỗi estimator là một lần chạy với cách hoán vị/biến đổi đặc trưng khác nhau; trung bình nhiều lần giảm phương sai. Chi phí: khoảng 1,5 giờ CPU cho 5 fold (so với 15 phút).
+
+**Ensemble NNLS (kiểm định lồng): 4,656** (sub10: 4,711).
+
+| Thành phần | Trọng số |
+|---|---|
+| TabPFN 8 estimator | 0,818 |
+| lgb_slow Huber + trọng số | 0,083 |
+| LightGBM L2 | 0,083 |
+| MLP | 0,015 |
+
+Thêm cả TabPFN 2 estimator vào blend không đổi kết quả (trọng số 0).
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.
