@@ -315,6 +315,8 @@ Sau sub06 (public 9,435), top 1 đạt 3,685. Với Final = 0,2 × RMSE_seen + 0
 | ZS: + ZHVI raw + SDOH | 5,108 | 5,252 | 5,124 | — |
 | **ZI: + IRS** | 5,125 | 5,213 | **5,094** | **5,070** |
 | ZIA: + Census ACS B25106 (tỷ lệ hộ không bị gánh nặng theo ZCTA, Spearman +0,55) | 5,136 | 5,226 | 5,113 | — (không cải thiện) |
+| Optuna 30 trial cho LightGBM (RMSE, cùng fold) | 5,104 (tốt nhất) | — | — | — (không hơn lgb_slow mặc định 5,094) |
+| Optuna CatBoost (dừng sau 4 trial, mỗi trial ~10 phút) | — | 5,200 (tốt nhất) | — | — (không hơn) |
 
 Các thử nghiệm phụ:
 - Mô hình cấu trúc tham số (25 tham số, `src/structural_model.py`): RMSE đứng riêng 10,58, **trọng số 0** khi blend.
