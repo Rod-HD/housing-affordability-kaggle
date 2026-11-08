@@ -515,6 +515,8 @@ Mỗi estimator là một lần chạy với cách hoán vị/biến đổi đ�
 
 Thêm cả TabPFN 2 estimator vào blend không đổi kết quả (trọng số 0).
 
+**Public leaderboard: sub11 = 4,036** (sub10: 4,047). Mức giảm 0,011 trên public nhỏ hơn mức giảm 0,055 trên CV. Điều này phù hợp với độ nhiễu của public (khoảng ±0,3, chỉ chấm 30% test), nên kết quả public không mâu thuẫn với CV.
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.
