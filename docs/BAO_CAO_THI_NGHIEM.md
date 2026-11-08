@@ -337,6 +337,85 @@ y_jul = y_jun + β × Δlog(ZHVI_raw, tháng 6→7) × y_jun(100 − y_jun)/100,
 
 **Submission sub07** (`sub07_zillow_irs_v3.csv`): ZIP mới dùng ensemble ZI (lgb 0,30 + cat 0,26 + lgb_slow 0,44), 3 seed; ZIP đã biết dùng nhãn tháng 6 + điều chỉnh Zillow. Ước tính 0,2 × 1,18 + 0,8 × (5,07 + 0,17) ≈ **4,43**. **Public LB thật: 4,473.**
 
+## 10c. Vì sao v7 (4,473) tốt hơn v6 (9,435) nhiều đến vậy
+
+### Tách điểm theo công thức chấm
+| | RMSE seen | RMSE new | Final = 0,2·seen + 0,8·new |
+|---|---|---|---|
+| v6 (suy ra từ LB) | ≈ 1,3 | ≈ 11,5 | 9,435 |
+| v7 (suy ra từ LB) | ≈ 1,2 | ≈ 5,3 | 4,473 |
+
+Khoảng **97% mức cải thiện đến từ ZIP mới** (RMSE 11,5 → 5,3, giảm 54%). ZIP đã biết chỉ đóng góp khoảng 0,02.
+
+### Nguyên nhân gốc: v6 thiếu biến quyết định target
+Target = % hộ có chi phí nhà ở ≤ 30% thu nhập. Chi phí của **chủ sở hữu** (khoảng 65% số hộ) phụ thuộc vào **giá nhà**, nhưng dữ liệu cuộc thi không có giá nhà, chỉ có giá thuê (ZORI). Vì vậy v6 phải "đoán" khả năng chi trả qua nhân khẩu học và láng giềng.
+
+| Bằng chứng | Số liệu |
+|---|---|
+| Spearman với target: biến tốt nhất của dữ liệu gốc (RentIndex) | −0,55 |
+| Spearman với target: log(ZHVI / thu nhập) | **−0,95** |
+| Chỉ 1 biến log(ZHVI/thu nhập), hồi quy isotonic | RMSE **8,79** |
+| v6: toàn bộ dữ liệu cuộc thi + geo + ensemble | RMSE 11,29 |
+| v7: thêm Zillow + IRS + CDC | RMSE **5,06** |
+
+→ **Một biến giá nhà duy nhất đã tốt hơn toàn bộ mô hình v6.**
+
+### Vì sao đặc trưng láng giềng của v6 không bù được
+- v6 dựa chủ yếu vào trung bình target của ZIP lân cận (geo10_idw chiếm 53% gain).
+- Nhưng **hai ZIP liền kề chênh nhau trung vị 9 điểm**, và chênh lệch target giữa cặp láng giềng tương quan **−0,72** với chênh lệch log(giá/thu nhập). Khả năng chi trả thay đổi theo giá nhà từng ZIP, nên trung bình láng giềng làm mờ đi.
+- Sai số của v6 tương quan **+0,49** với độ lệch giá/thu nhập của ZIP so với láng giềng: ZIP đắt hơn hàng xóm thì v6 dự đoán quá cao, rẻ hơn thì quá thấp. Với v7, tương quan này còn **+0,03**, tức lỗi hệ thống này đã biến mất.
+
+### Mô hình v7 dựa vào gì (gain LightGBM, fold 0)
+| Nhóm | % gain |
+|---|---|
+| **Zillow** (log_pti, log_pti_raw, own_burden, các phân khúc…) | **91,7%** |
+| Láng giềng / địa lý | 4,7% |
+| Dữ liệu cuộc thi | 1,7% |
+| IRS | 1,2% |
+| CDC | 0,7% |
+
+Ablation (bỏ từng nhóm, RMSE gốc 5,099):
+
+| Nhóm bị bỏ | Δ RMSE |
+|---|---|
+| Phân khúc Zillow (thấp/cao/nhà riêng/căn hộ/số phòng ngủ) | **+0,931** |
+| Target encoding vùng | +0,035 |
+| IRS | +0,030 |
+| lat/lon/state | +0,030 |
+| GWR | +0,021 |
+| rel_*, KNN theo số mã ZIP, láng giềng giống nhau, cấu trúc log-normal | +0,004 đến +0,007 |
+| CDC, đặc trưng hộ gia đình gốc, geo KNN | ≤ +0,002 |
+
+Bỏ phân khúc giá làm tăng 0,93 dù vẫn giữ giá trung vị. Như vậy **phân phối giá nhà trong ZIP** (nhà rẻ/đắt, nhiều/ít phòng ngủ) mang thông tin lớn. Điều này khớp với cách tính target ở cấp hộ: mỗi hộ có giá nhà riêng chứ không phải giá trung bình.
+
+### Cải thiện theo phân khúc (OOF trên cùng 6.830 ZIP, RMSE)
+| Phân khúc | v6 | v7 | Giảm |
+|---|---|---|---|
+| Target 0–10 | 8,06 | 4,24 | 47% |
+| Target 50–70 | 11,43 | 4,92 | 57% |
+| Target 70–90 | 12,47 | 4,41 | 65% |
+| Target 90–100 | 16,61 | 6,29 | 62% |
+| OwnerPercent ≤ 30% (đô thị, nhiều người thuê) | 15,05 | 9,39 | **38%** (ít nhất) |
+| OwnerPercent 50–70% | 11,18 | 4,44 | **60%** |
+| Bang đắt đỏ (CA, HI, WA, MA, NY, NJ, CO) | 9,37 | 4,82 | 49% |
+| Các bang khác | 11,93 | 5,15 | 57% |
+
+Cải thiện lớn nhất ở ZIP nhiều chủ sở hữu, đúng như cơ chế (giá nhà quyết định chi phí của chủ sở hữu). Cải thiện ít nhất ở ZIP đô thị nhiều người thuê, vì ở đó giá nhà ít liên quan. Nhóm này cũng là nơi còn lại phần lớn sai số.
+
+### Phần ZIP đã biết
+v6 giữ nguyên nhãn tháng 6. v7 điều chỉnh theo thay đổi giá nhà tháng 6→7 của chính ZIP (β = −2,43, không intercept): RMSE kiểm định 1,252 → 1,183, đóng góp khoảng −0,014 vào điểm cuối.
+
+## 10d. Train tiếp sau sub07 (đều không vượt sub07)
+| Thử nghiệm | RMSE ZIP mới (lgb_slow) | Kết luận |
+|---|---|---|
+| Cấu hình sub07 (ZI) | 5,094 | — |
+| + Census ACS B25106 | 5,113 | Không giúp |
+| + dòng tháng 5 làm dữ liệu train thêm (Zillow đúng tháng) | 5,081 | Khác biệt trong mức nhiễu |
+| Optuna 30 trial LightGBM | 5,104 | Không giúp |
+| Stacking tầng 2 (ridge / LGBM trên OOF + biến phân khúc) | 5,072 / 5,100 (so với 5,064) | Kém hơn |
+| Đặc trưng log-normal kết hợp (thu nhập × giá nhà, σ từ IRS và độ chênh phân khúc) | 5,106 | Không giúp |
+| Ablation: bỏ bất kỳ nhóm đặc trưng nào | +0,001 đến +0,93 | Giữ đủ 152 đặc trưng |
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.
