@@ -468,6 +468,29 @@ Giải thích: ZIP ít hộ có nhãn kém ổn định. Trọng số √n tươ
 
 **Submission sub09** (`sub09_gbm_mlp_v5.csv`): ZIP đã biết giữ như sub08; ZIP mới = 0,506·lgb_slow_h_w + 0,191·lgb + 0,064·cat_w (3 seed, đặc trưng v4) + 0,239·MLP (5 seed, đặc trưng v3). Dự kiến public ≈ 4,421 − 0,8 × 0,06 ≈ **4,37**. **Public LB thật: 4,415** (chỉ −0,006). Public chỉ chấm khoảng 30% test, tức khoảng 510 ZIP mới. Bootstrap trên OOF: độ lệch chuẩn của RMSE ZIP mới trên 510 ZIP là 0,41 (đuôi dày), tức khoảng ±0,33 trên điểm cuối. Chênh lệch có cặp sub09 − sub08 có trung bình −0,066 và độ lệch chuẩn 0,067; xác suất sub09 tốt hơn là 85%. Kết quả −0,006 nằm trong khoảng 1 độ lệch chuẩn của kỳ vọng.
 
+## 10g. TabPFN — mô hình nền tảng cho dữ liệu bảng (sub10)
+
+TabPFN (Prior Labs, bản 2.6) là một Transformer được huấn luyện trước trên hàng triệu bộ dữ liệu bảng tổng hợp. Mô hình dự đoán bằng *in-context learning*: toàn bộ tập train được đưa vào như "ngữ cảnh", và không có bước tối ưu tham số cho bộ dữ liệu này. Với dữ liệu nhỏ (khoảng 5.400 dòng train mỗi fold, 152 đặc trưng), mô hình này thường mạnh hơn GBM.
+
+| Mô hình (cùng 5 fold July-proxy, đặc trưng v3) | RMSE ZIP mới |
+|---|---|
+| lgb_slow Huber + trọng số (tốt nhất trong các mô hình cây) | 5,024 |
+| MLP | 5,598 |
+| **TabPFN 2.6** (CPU, 2 estimator, không tuning) | **4,770** |
+
+Theo từng fold: 4,661 / 5,161 / 4,962 / 4,679 / 4,344. TabPFN tốt hơn mô hình cây tốt nhất ở 4/5 fold.
+
+**Ensemble NNLS (kiểm định lồng): 4,711** (sub09: 4,956, giảm 0,245).
+
+| Thành phần | Trọng số |
+|---|---|
+| TabPFN | 0,672 |
+| lgb_slow Huber + trọng số | 0,132 |
+| LightGBM L2 | 0,132 |
+| MLP | 0,063 |
+
+**Submission sub10** (`sub10_gbm_mlp_tabpfn_v6.csv`): ZIP đã biết giữ như sub08/sub09. Dự kiến public ≈ 4,415 − 0,8 × 0,245 ≈ **4,22**.
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.

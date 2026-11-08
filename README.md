@@ -17,7 +17,8 @@ Báo cáo đầy đủ mọi thí nghiệm, kể cả các phương pháp cho k�
 | sub06 | + láng giềng "gần và giống nhau", ensemble tối ưu RMSE (NNLS) | 9,435 |
 | **sub07** | **+ giá nhà Zillow ZHVI, phân phối thu nhập IRS, CDC SDOH; seen chỉnh theo thay đổi giá nhà** | **4,473** |
 | sub08 | + chi phí theo năm mua, loss Huber, trọng số √SampleSize (CV ZIP mới 5,070 → 5,016) | 4,421 |
-| **sub09** | **+ MLP trong ensemble (CV ZIP mới 5,016 → 4,956)** | **4,415** |
+| sub09 | + MLP trong ensemble (CV ZIP mới 5,016 → 4,956) | 4,415 |
+| **sub10** | **+ TabPFN 2.6 (mô hình nền tảng cho dữ liệu bảng), trọng số 0,67 (CV ZIP mới 4,956 → 4,711)** | _chưa nộp_ |
 
 ## Pipeline (sub07)
 1. **Seen ZIP**: `y_jul = y_jun + β · Δlog(ZHVI) · y_jun(100 − y_jun)/100`, với β = −2,43 khớp trên bước tháng 5→6 (không dùng intercept).
