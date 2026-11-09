@@ -22,6 +22,7 @@ Báo cáo đầy đủ mọi thí nghiệm, kể cả các phương pháp cho k�
 | sub11 | TabPFN 8 estimator, trọng số 0,82 (CV ZIP mới 4,711 → 4,656) | 4,036 |
 | sub12 | TabPFN 32 estimator trên hai bộ đặc trưng v3 + v4, chạy GPU (CV ZIP mới 4,656 → 4,618) | 4,016 |
 | **sub13** | **+ dữ liệu niêm yết Realtor.com theo ZIP, TabPFN 32 estimator (CV ZIP mới 4,618 → 4,501)** | **3,838** |
+| sub14 | + Realtor.com market hotness (CV ZIP mới 4,500 → 4,489) | _chưa nộp_ |
 
 ## Pipeline (sub07)
 1. **Seen ZIP**: `y_jul = y_jun + β · Δlog(ZHVI) · y_jun(100 − y_jun)/100`, với β = −2,43 khớp trên bước tháng 5→6 (không dùng intercept).
@@ -64,5 +65,5 @@ cd src
 | `outputs/figures/` | Hình cho báo cáo |
 
 ## Dữ liệu ngoài (công khai, không chứa nhãn test)
-Zillow Research (ZHVI/ZORI), Realtor.com Research (Inventory Core Metrics theo ZIP), IRS SOI ZIP Code Data, CDC PLACES SDOH (ZCTA), GeoNames.
+Zillow Research (ZHVI/ZORI), Realtor.com Research (Inventory Core Metrics và Market Hotness theo ZIP), HUD Small Area FMR (đã thử, không dùng), IRS SOI ZIP Code Data, CDC PLACES SDOH (ZCTA), GeoNames.
 Dữ liệu của cuộc thi **không** được đưa lên repo, theo luật cuộc thi.

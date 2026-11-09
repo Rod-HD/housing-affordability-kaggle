@@ -606,6 +606,37 @@ Chọn **G** vì chỉ có 2 thành phần, nested tốt nhất, và chênh lệ
 
 **Public leaderboard: sub13 = 3,838** (sub12: 4,016, giảm 0,178). Mức giảm lớn hơn dự kiến từ CV khi đã bỏ các ZIP thiếu Zillow (khoảng 0,02–0,03 trên điểm tổng). Có thể phần public (khoảng 30% test) chứa một số trong 3 ZIP test thiếu Zillow. Mỗi ZIP như vậy có sai số rất lớn, nên một ZIP được sửa cũng làm điểm public thay đổi đáng kể. Nếu đúng vậy, mức lợi trên phần private có thể nhỏ hơn. Chiều thay đổi vẫn khớp với CV (lần thứ tư liên tiếp).
 
+## 10k. HUD SAFMR và Realtor hotness (sub14)
+
+Nguồn mới:
+- **HUD Small Area Fair Market Rents FY2026 (bản sửa đổi):** tiền thuê chuẩn theo ZIP cho căn 0–4 phòng ngủ. Phủ 100% ZIP test.
+- **Realtor.com Market Hotness:** điểm cung, điểm cầu, lượt xem mỗi tin so với cả nước. Phủ khoảng 95–97% ZIP.
+
+Cả hai đều không chứa nhãn. Dữ liệu hotness chỉ lấy đến tháng mục tiêu.
+
+| Thí nghiệm | Kết quả | Quyết định |
+|---|---|---|
+| LightGBM Huber trên v5 / v6 (+HUD) / v7 (+hotness) / v8 (+cả hai) | 4,941 / 4,937 / 4,934 / 4,944 | Chênh lệch trong mức nhiễu |
+| TabPFN 8 est v6 (+HUD) so với v5 | 4,519 so với 4,513 (bootstrap: −0,006, KTC 95% −0,033 đến +0,021) | Bỏ HUD |
+| TabPFN 8 est v7 (+hotness) so với v5 | 4,501 so với 4,513 (+0,012, KTC 95% −0,017 đến +0,042) | Chưa chắc chắn, kiểm chứng bằng 32 est |
+| ZIP đã biết: thêm biến động giá Realtor tháng trước → tháng sau | RMSE 1,1835, bằng công thức cũ, hệ số ≈ 0 | Bỏ |
+| TabPFN 32 est v7 (hotness) | **4,496** (v5: 4,509), tốt hơn ở cả 5 fold | Dùng |
+
+Tiêu chí được đặt **trước khi có kết quả 32 est**: chỉ dùng hotness nếu blend lồng tốt hơn sub13 với xác suất bootstrap trên 0,9.
+
+| Blend | Nested | Lợi so với sub13 (KTC 95%) | P(lợi > 0) |
+|---|---|---|---|
+| Công thức sub13 (LightGBM v5 + TabPFN32 v5) | 4,500 | | |
+| **K: LightGBM v5 + TabPFN32 v7** | **4,489** | +0,012 (0,003 đến 0,021) | 0,993 |
+| J: K + TabPFN32 v5 | 4,489 | như K (TabPFN v5 nhận trọng số 0) | 0,993 |
+
+Blend K đạt tiêu chí và được chọn. Trọng số: TabPFN32 v7 0,876, LightGBM v5 0,124. Mức lợi nhỏ (khoảng 0,01 trên điểm tổng), nhỏ hơn nhiều so với độ nhiễu của public (±0,3), nên điểm public có thể tăng hoặc giảm nhẹ. So với sub13 trên ZIP mới, dự báo thay đổi trung bình 0,23 điểm, tối đa 1,6.
+
+Kỹ thuật:
+- Lần chạy 32 est bị gián đoạn hai lần: một lần do phiên làm việc bị ngắt, một lần do hết bộ nhớ GPU.
+- Script được sửa để lưu kết quả từng fold, nên chạy lại chỉ làm các fold còn thiếu.
+- Tùy chọn `expandable_segments` của PyTorch gây lỗi trên Windows nên không dùng.
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.
