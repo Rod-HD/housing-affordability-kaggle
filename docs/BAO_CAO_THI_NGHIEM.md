@@ -604,6 +604,8 @@ Phần lớn mức giảm của TabPFN đến từ 23 ZIP không có Zillow: RMS
 
 Chọn **G** vì chỉ có 2 thành phần, nested tốt nhất, và chênh lệch in-sample/nested nhỏ nhất (0,003). Trọng số: TabPFN32 v5 0,871, LightGBM v5 0,129. Phần ZIP đã biết giữ nguyên. Thay đổi trung bình so với sub12 trên ZIP mới là 0,87 điểm. ZIP thay đổi nhiều nhất là 64841 (MO), một trong 3 ZIP test thiếu Zillow: từ 50,3 lên 65,1.
 
+**Public leaderboard: sub13 = 3,838** (sub12: 4,016, giảm 0,178). Mức giảm lớn hơn dự kiến từ CV khi đã bỏ các ZIP thiếu Zillow (khoảng 0,02–0,03 trên điểm tổng). Có thể phần public (khoảng 30% test) chứa một số trong 3 ZIP test thiếu Zillow. Mỗi ZIP như vậy có sai số rất lớn, nên một ZIP được sửa cũng làm điểm public thay đổi đáng kể. Nếu đúng vậy, mức lợi trên phần private có thể nhỏ hơn. Chiều thay đổi vẫn khớp với CV (lần thứ tư liên tiếp).
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.
