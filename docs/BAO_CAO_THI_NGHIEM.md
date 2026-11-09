@@ -632,6 +632,8 @@ Tiêu chí được đặt **trước khi có kết quả 32 est**: chỉ dùng 
 
 Blend K đạt tiêu chí và được chọn. Trọng số: TabPFN32 v7 0,876, LightGBM v5 0,124. Mức lợi nhỏ (khoảng 0,01 trên điểm tổng), nhỏ hơn nhiều so với độ nhiễu của public (±0,3), nên điểm public có thể tăng hoặc giảm nhẹ. So với sub13 trên ZIP mới, dự báo thay đổi trung bình 0,23 điểm, tối đa 1,6.
 
+**Điểm public của sub14: 3,826** (sub13: 3,838). Mức tăng 0,012 khớp với dự đoán từ CV (khoảng 0,01), nhưng vẫn nằm trong độ nhiễu public nên không nên coi là bằng chứng mạnh.
+
 Kỹ thuật:
 - Lần chạy 32 est bị gián đoạn hai lần: một lần do phiên làm việc bị ngắt, một lần do hết bộ nhớ GPU.
 - Script được sửa để lưu kết quả từng fold, nên chạy lại chỉ làm các fold còn thiếu.
