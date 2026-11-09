@@ -639,6 +639,63 @@ Kỹ thuật:
 - Script được sửa để lưu kết quả từng fold, nên chạy lại chỉ làm các fold còn thiếu.
 - Tùy chọn `expandable_segments` của PyTorch gây lỗi trên Windows nên không dùng.
 
+## 10l. Bản không dùng Realtor.com (sub15–sub17)
+
+**Lý do.** Điều khoản sử dụng của Realtor.com (realtor.com/terms-of-service) có câu: "You shall not harvest, ingest, or use any Content for any machine learning or artificial intelligence purposes…". Để chắc chắn tuân thủ, nhánh này bỏ hoàn toàn dữ liệu Realtor.com và chỉ dùng nguồn chính phủ Mỹ, Zillow và GeoNames. Điều khoản của Zillow cho phép dùng dữ liệu tổng hợp ("Aggregate Data") cho phân tích thị trường, kèm ghi nguồn "Data Provided by Zillow Group", và không có câu cấm học máy.
+
+Mốc so sánh là sub12 (nested 4,618), không phải sub13–14.
+
+### Dữ liệu mới
+
+| Bộ đặc trưng | Nội dung | LightGBM (lgb / lgb_slow_h_w) | TabPFN 8 est |
+|---|---|---|---|
+| v4 (sub12) | | 5,113 / 5,028 | 4,655 |
+| w1 | v4 + HUD SAFMR | 5,120 / 5,040 | 4,644 |
+| w2 | v4 + ACS B25106, thu nhập theo tenure, 16 khoảng thu nhập | 5,154 / 5,028 | 4,633 |
+| **w3** | v4 + HUD + ACS + giá nhà tốt nhất (Zillow → ACS median value → tiền thuê HUD × tỷ lệ giá/thuê) | 5,103 / 5,010 | **4,539** |
+| w4 | w3 + ACS B25070/B25091 (phân phối chi phí/thu nhập), B25103 (thuế nhà đất), ACS 2020–24 | 5,103 / 5,010 | 4,595 |
+| w5 | w3 + FHFA HPI ZIP5 (tăng giá 1–20 năm, tăng giá từ năm chuyển đến) | 5,107 / 5,016 | 4,534 |
+| w6 | w3 + ACS B25070/91/103 + FHFA | 5,104 / 4,998 | 4,544 |
+| v4q | v4, khử drift bằng quantile mapping thay cho dịch trung vị | 5,111 / 5,027 | 4,656 |
+
+- Bước nhảy đến từ w3. Tách riêng 23 ZIP thiếu Zillow trong CV: trên các ZIP còn lại, w3 tốt hơn v4 **0,067** (KTC 95% 0,021–0,113). Mức này còn hơn v5 có Realtor (0,048), nên đây không chỉ là hiệu ứng của vài ZIP thiếu dữ liệu.
+- Trên các ZIP thiếu Zillow, giá nhà ước từ ACS/HUD thay được vai trò của giá niêm yết Realtor. Với ZIP 64841 trong test: sub12 đoán 50,3, sub14 (Realtor) 66,1, sub15 69,0.
+- Thêm phân phối chi phí ACS (w4) làm TabPFN kém đi, có lẽ vì quá nhiều cột gần trùng nhau. FHFA và quantile mapping không tạo khác biệt.
+
+### Mô hình mới (2025–2026)
+
+Danh sách mô hình được chọn từ các bài báo và bản phát hành 2025–2026, chạy trên cùng các fold.
+
+| Mô hình | Gói | OOF ZIP mới | Ghi chú |
+|---|---|---|---|
+| TabICLv2 (2026), 8 estimator | tabicl 2.2.0 | v4: 4,847; w3: 4,830 | Nhanh (khoảng 20 giây mỗi fold) nhưng kém TabPFN; trọng số 0 trong blend |
+| TabDPT (NeurIPS 2025), context 1024 | tabdpt 1.3.2 | fold 0: 5,741 | Khoảng 13 phút mỗi fold; dừng sau fold 0 |
+| xRFM (2025) | xrfm 0.4.5 | 5,845 | Trọng số 0 trong blend |
+| TabPFN v3.5, 32 estimator | tabpfn 9.2.0 | w3: **4,537**; w5: 4,544 | Vẫn là mô hình tốt nhất |
+
+### Blend
+
+Các tổ hợp được khai báo trước khi có kết quả TabPFN 32 estimator. Quy tắc: trong các tổ hợp có P(lợi > 0) > 0,9, chọn tổ hợp ít thành phần nhất trong nhóm cách tổ hợp tốt nhất không quá 0,005.
+
+| Blend | Nested | Lợi so với sub12 (KTC 95%) | P | Trên ZIP có Zillow |
+|---|---|---|---|---|
+| sub12 | 4,618 | | | 4,379 |
+| **S1: LightGBM w3 + TabPFN32 w3 → sub15** | **4,537** | +0,081 (−0,034 đến 0,212) | 0,910 | 4,344 (+0,034; −0,012 đến 0,081) |
+| S2: S1 + TabPFN32 w5 | 4,538 | +0,079 | 0,905 | 4,346 |
+| S3: S2 + TabICL + xRFM | 4,544 | +0,074 | 0,896 | 4,347 |
+| **S4: S2 + TabPFN32 v3 của sub12 → sub16** | 4,542 | +0,077 (−0,006 đến 0,169) | **0,963** | **4,334** (+0,045; 0,012 đến 0,078) |
+| S5: chọn tham lam Caruana → sub17 | 4,542 | +0,077 | 0,960 | 4,332 |
+
+- Theo quy tắc, **sub15 = S1** (TabPFN32 w3 0,929, LightGBM w3 0,071).
+- Tập test chỉ có 3/1704 ZIP mới thiếu Zillow, ít hơn CV (23/6830). Vì vậy cột "trên ZIP có Zillow" sát với test hơn, và theo cột này S4 (sub16) ổn định hơn: KTC không chứa 0. sub16 được giữ làm phương án song song.
+- So với sub12 trên ZIP mới: sub15 thay đổi trung bình 1,03 điểm (tối đa 18,7, ZIP 64841), sub16 0,74, sub17 0,77. sub15 lệch sub14 trung bình 0,48 điểm.
+- Thử nhưng không dùng: TabDPT, xRFM, TabICL, quantile mapping, FHFA, ACS B25070/91/103.
+
+### Kỹ thuật
+- Các bộ đặc trưng được gom vào `src/featuresets.py`, dùng chung cho CV và submission.
+- `make_submission_v11.py` lưu cache từng thành phần trong `outputs/sub_parts`.
+- Cài thêm `tabicl==2.2.0`, `tabdpt==1.3.2`, `xrfm==0.4.5` vào `.venv` và giữ nguyên torch 2.14.1+cu126. TabDPT yêu cầu `huggingface-hub<2`, nên gói này được hạ xuống 1.33.0; TabPFN vẫn chạy bình thường.
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.

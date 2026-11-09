@@ -28,7 +28,7 @@ DEV = "cuda" if torch.cuda.is_available() else "cpu"
 TAG = f"{VAR}{ARG}_n{N_EST}_r{SEED}"
 from tabpfn import TabPFNRegressor
 
-cache = f"fold_cache_{VAR}.pkl" if VAR in ("v4", "v5", "v6", "v7", "v8") else "fold_cache_full.pkl"
+cache = f"fold_cache_{VAR}.pkl" if os.path.exists(f"{OUT}/fold_cache_{VAR}.pkl") else "fold_cache_full.pkl"
 folds = pickle.load(open(f"{OUT}/{cache}", "rb"))
 tr, _, _ = load(); zips = np.sort(tr[tr.Month == JUN].Zip.values)
 splits = list(KFold(5, shuffle=True, random_state=200).split(zips))

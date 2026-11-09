@@ -23,6 +23,9 @@ Báo cáo đầy đủ mọi thí nghiệm, kể cả các phương pháp cho k�
 | sub12 | TabPFN 32 estimator trên hai bộ đặc trưng v3 + v4, chạy GPU (CV ZIP mới 4,656 → 4,618) | 4,016 |
 | sub13 | + dữ liệu niêm yết Realtor.com theo ZIP, TabPFN 32 estimator (CV ZIP mới 4,618 → 4,501) | 3,838 |
 | **sub14** | **+ Realtor.com market hotness (CV ZIP mới 4,500 → 4,489)** | **3,826** |
+| sub15 | Không dùng Realtor.com: + HUD, ACS, giá nhà tốt nhất (bộ w3), TabPFN 32 estimator (CV ZIP mới 4,618 → 4,537) | _chưa nộp_ |
+| sub16 | Như sub15, thêm TabPFN v3 của sub12 (CV 4,542; ổn định hơn trên ZIP có Zillow) | _chưa nộp_ |
+| sub17 | Như sub16, trọng số chọn kiểu Caruana (CV 4,542) | _chưa nộp_ |
 
 ## Pipeline (sub07)
 1. **Seen ZIP**: `y_jul = y_jun + β · Δlog(ZHVI) · y_jun(100 − y_jun)/100`, với β = −2,43 khớp trên bước tháng 5→6 (không dùng intercept).
@@ -65,5 +68,6 @@ cd src
 | `outputs/figures/` | Hình cho báo cáo |
 
 ## Dữ liệu ngoài (công khai, không chứa nhãn test)
-Zillow Research (ZHVI/ZORI), Realtor.com Research (Inventory Core Metrics và Market Hotness theo ZIP), HUD Small Area FMR (đã thử, không dùng), IRS SOI ZIP Code Data, CDC PLACES SDOH (ZCTA), GeoNames.
+Zillow Research (ZHVI/ZORI; Data Provided by Zillow Group), HUD Small Area FMR, Census ACS 5-year (ZCTA), FHFA HPI ZIP5 (thử, không dùng), IRS SOI ZIP Code Data, CDC PLACES SDOH (ZCTA), GeoNames (CC-BY).
+Realtor.com Research chỉ dùng trong sub13–sub14. Điều khoản của Realtor.com cấm dùng nội dung cho học máy, nên các bản từ sub15 trở đi không dùng nguồn này.
 Dữ liệu của cuộc thi **không** được đưa lên repo, theo luật cuộc thi.
