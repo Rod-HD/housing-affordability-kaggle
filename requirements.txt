@@ -9,3 +9,7 @@ optuna==5.0.0
 matplotlib==3.11.2
 pgeocode==0.5.0
 statsmodels==0.15.0
+# deep tabular models (for GPU, install torch from https://download.pytorch.org/whl/cu126)
+torch==2.14.1
+tabpfn==9.2.0
+pytabkit==1.8.0

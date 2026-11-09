@@ -517,6 +517,44 @@ Thêm cả TabPFN 2 estimator vào blend không đổi kết quả (trọng số
 
 **Public leaderboard: sub11 = 4,036** (sub10: 4,047). Mức giảm 0,011 trên public nhỏ hơn mức giảm 0,055 trên CV. Điều này phù hợp với độ nhiễu của public (khoảng ±0,3, chỉ chấm 30% test), nên kết quả public không mâu thuẫn với CV.
 
+## 10i. Chạy GPU và các biến thể TabPFN (sub12)
+
+Chuyển PyTorch sang bản CUDA 12.6 (RTX 4060 Laptop, 8 GB). TabPFN 8 estimator cho 5 fold giảm từ khoảng 90 phút xuống 6,6 phút trên GPU và cho lại đúng OOF 4,667. Toàn bộ dùng cùng 5 fold July-proxy.
+
+| Biến thể | OOF RMSE (ZIP mới) | Nhận xét |
+|---|---|---|
+| TabPFN 8 est, đặc trưng v3, seed 0 / 1 / 2 | 4,667 / 4,644 / 4,676 | Chênh lệch giữa seed là nhiễu; hai seed tương quan 0,9998 |
+| TabPFN 8 est, đặc trưng v4, seed 0 / 1 / 2 | 4,655 / 4,648 / 4,667 | Nhỉnh hơn v3 một chút |
+| TabPFN 32 est, v3 | **4,632** | Tăng estimator có ích |
+| TabPFN 32 est, v4 | **4,629** | Mô hình đơn tốt nhất |
+| TabPFN 8 est, top-60 đặc trưng (LightGBM, trong fold) | 4,698 | Kém hơn |
+| TabPFN 8 est, top-100 đặc trưng | 4,663 | Xấp xỉ dùng đủ đặc trưng |
+| TabPFN 8 est + dự báo LightGBM OOF làm đặc trưng | 4,757 | Kém hơn rõ |
+| Fine-tune TabPFN (ngữ cảnh 1.024, 10 epoch, chỉ fold 0) | fold 0: 4,509 | Bằng bản không fine-tune (4,509), không chạy đủ 5 fold; bản 30 epoch bị dừng vì quá chậm |
+| RealMLP-TD (pytabkit) | 5,488 | Trọng số 0 trong ensemble |
+| TabM-D (pytabkit), v3 / v4 | 5,136 / 5,124 | Không cải thiện ensemble |
+
+So sánh các blend khai báo trước, trọng số NNLS, luôn đánh giá lồng (fit trên 4/5, chấm trên 1/5, lặp 5 lần), và bootstrap ghép cặp 2.000 lần so với công thức sub11:
+
+| Blend | In-sample | Nested | Lợi so với sub11 (KTC 95%) |
+|---|---|---|---|
+| Công thức sub11 | 4,648 | 4,656 | |
+| A: GBM + TabPFN32 v3 | 4,622 | 4,628 | +0,028 (0,015 đến 0,043) |
+| **B: GBM + TabPFN32 v3 + v4** | 4,611 | **4,618** | +0,038 (0,022 đến 0,054) |
+| C: B + top-100 | 4,610 | 4,618 | +0,037 |
+| D: C + seed phụ | 4,610 | 4,621 | +0,035 |
+| E: C + TabM | 4,606 | 4,619 | +0,037 |
+| F: C + MLP + RealMLP | 4,610 | 4,620 | +0,036 |
+
+Chọn **B** vì ít thành phần nhất mà không kém các cấu hình lớn hơn. Từ C đến F, in-sample giảm tiếp nhưng nested không giảm, đây là dấu hiệu thêm thành phần chỉ khớp nhiễu. Bootstrap chỉ tính độ dao động theo mẫu ZIP, không tính việc đã thử nhiều cấu hình, nên mức lợi thực tế có thể thấp hơn.
+
+| Thành phần của B | Trọng số |
+|---|---|
+| TabPFN 32 est, v3 | 0,491 |
+| TabPFN 32 est, v4 | 0,409 |
+| LightGBM L2 | 0,053 |
+| lgb_slow Huber + trọng số | 0,047 |
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.
