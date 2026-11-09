@@ -555,6 +555,8 @@ Chọn **B** vì ít thành phần nhất mà không kém các cấu hình lớn
 | LightGBM L2 | 0,053 |
 | lgb_slow Huber + trọng số | 0,047 |
 
+**Public leaderboard: sub12 = 4,016** (sub11: 4,036, sub10: 4,047). Public giảm 0,020, trong khi CV trên ZIP mới giảm 0,038, tương đương khoảng 0,030 trên điểm tổng (trọng số 0,8). Chiều thay đổi khớp với CV.
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.
