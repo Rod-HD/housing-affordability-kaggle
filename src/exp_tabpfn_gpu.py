@@ -5,6 +5,7 @@ Usage: python exp_tabpfn_gpu.py VARIANT [N_EST] [SEED] [ARG]
   stack  + inner out-of-fold LightGBM prediction as an extra feature
   ft     fine-tune TabPFN weights on the training part (ARG = epochs)
   v4     v4 feature set (fold_cache_v4.pkl, adds purchase-year costs)
+  v5     v4 + Realtor.com features (fold_cache_v5.pkl)
 Output: outputs/rmse_oof_TPF_<tag>_s0.csv (columns Zip, y, <tag>)"""
 import os, pickle, sys, time, warnings
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +28,7 @@ DEV = "cuda" if torch.cuda.is_available() else "cpu"
 TAG = f"{VAR}{ARG}_n{N_EST}_r{SEED}"
 from tabpfn import TabPFNRegressor
 
-cache = "fold_cache_v4.pkl" if VAR == "v4" else "fold_cache_full.pkl"
+cache = f"fold_cache_{VAR}.pkl" if VAR in ("v4", "v5") else "fold_cache_full.pkl"
 folds = pickle.load(open(f"{OUT}/{cache}", "rb"))
 tr, _, _ = load(); zips = np.sort(tr[tr.Month == JUN].Zip.values)
 splits = list(KFold(5, shuffle=True, random_state=200).split(zips))
