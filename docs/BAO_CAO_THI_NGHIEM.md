@@ -470,13 +470,13 @@ Giải thích: ZIP ít hộ có nhãn kém ổn định. Trọng số √n tươ
 
 ## 10g. TabPFN — mô hình nền tảng cho dữ liệu bảng (sub10)
 
-TabPFN (Prior Labs, bản 2.6) là một Transformer được huấn luyện trước trên hàng triệu bộ dữ liệu bảng tổng hợp. Mô hình dự đoán bằng *in-context learning*: toàn bộ tập train được đưa vào như "ngữ cảnh", và không có bước tối ưu tham số cho bộ dữ liệu này. Với dữ liệu nhỏ (khoảng 5.400 dòng train mỗi fold, 152 đặc trưng), mô hình này thường mạnh hơn GBM.
+TabPFN (Prior Labs, bản 3.5) là một Transformer được huấn luyện trước trên hàng triệu bộ dữ liệu bảng tổng hợp. Mô hình dự đoán bằng *in-context learning*: toàn bộ tập train được đưa vào như "ngữ cảnh", và không có bước tối ưu tham số cho bộ dữ liệu này. Với dữ liệu nhỏ (khoảng 5.400 dòng train mỗi fold, 152 đặc trưng), mô hình này thường mạnh hơn GBM.
 
 | Mô hình (cùng 5 fold July-proxy, đặc trưng v3) | RMSE ZIP mới |
 |---|---|
 | lgb_slow Huber + trọng số (tốt nhất trong các mô hình cây) | 5,024 |
 | MLP | 5,598 |
-| **TabPFN 2.6** (CPU, 2 estimator, không tuning) | **4,770** |
+| **TabPFN 3.5** (CPU, 2 estimator, không tuning) | **4,770** |
 
 Theo từng fold: 4,661 / 5,161 / 4,962 / 4,679 / 4,344. TabPFN tốt hơn mô hình cây tốt nhất ở 4/5 fold.
 

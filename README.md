@@ -18,7 +18,7 @@ Báo cáo đầy đủ mọi thí nghiệm, kể cả các phương pháp cho k�
 | **sub07** | **+ giá nhà Zillow ZHVI, phân phối thu nhập IRS, CDC SDOH; seen chỉnh theo thay đổi giá nhà** | **4,473** |
 | sub08 | + chi phí theo năm mua, loss Huber, trọng số √SampleSize (CV ZIP mới 5,070 → 5,016) | 4,421 |
 | sub09 | + MLP trong ensemble (CV ZIP mới 5,016 → 4,956) | 4,415 |
-| sub10 | + TabPFN 2.6 (mô hình nền tảng cho dữ liệu bảng), trọng số 0,67 (CV ZIP mới 4,956 → 4,711) | 4,047 |
+| sub10 | + TabPFN 3.5 (mô hình nền tảng cho dữ liệu bảng), trọng số 0,67 (CV ZIP mới 4,956 → 4,711) | 4,047 |
 | **sub11** | **TabPFN 8 estimator, trọng số 0,82 (CV ZIP mới 4,711 → 4,656)** | **4,036** |
 | sub12 | TabPFN 32 estimator trên hai bộ đặc trưng v3 + v4, chạy GPU (CV ZIP mới 4,656 → 4,618) | _chưa nộp_ |
 
