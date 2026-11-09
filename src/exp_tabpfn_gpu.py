@@ -28,7 +28,7 @@ DEV = "cuda" if torch.cuda.is_available() else "cpu"
 TAG = f"{VAR}{ARG}_n{N_EST}_r{SEED}"
 from tabpfn import TabPFNRegressor
 
-cache = f"fold_cache_{VAR}.pkl" if VAR in ("v4", "v5") else "fold_cache_full.pkl"
+cache = f"fold_cache_{VAR}.pkl" if VAR in ("v4", "v5", "v6", "v7", "v8") else "fold_cache_full.pkl"
 folds = pickle.load(open(f"{OUT}/{cache}", "rb"))
 tr, _, _ = load(); zips = np.sort(tr[tr.Month == JUN].Zip.values)
 splits = list(KFold(5, shuffle=True, random_state=200).split(zips))
@@ -64,7 +64,12 @@ for f, ((Xt, yt, Xv, yv), (a, b)) in enumerate(zip(folds, splits)):
             inner[ib] = lgb.LGBMRegressor(**LGB).fit(Xt.iloc[ia], yt[ia]).predict(Xt.iloc[ib])
         Xt = Xt.assign(lgb_pred=inner)
         Xv = Xv.assign(lgb_pred=lgb.LGBMRegressor(**LGB).fit(Xt.drop(columns="lgb_pred"), yt).predict(Xv))
-    p = np.clip(tabpfn(Xt, yt, Xv), 0, 100)
+    part = f"{OUT}/tpf_parts/{TAG}_f{f}.npy"         # per-fold cache: an interrupted run resumes where it stopped
+    if os.path.exists(part):
+        p = np.load(part)
+    else:
+        p = np.clip(tabpfn(Xt, yt, Xv), 0, 100)
+        os.makedirs(os.path.dirname(part), exist_ok=True); np.save(part, p)
     oof[b] = p; y_all[b] = yv
     print(f"[{TAG}] fold {f} {time.time()-t0:.0f}s RMSE {np.sqrt(((p - yv) ** 2).mean()):.3f}", flush=True)
 if ONLY:

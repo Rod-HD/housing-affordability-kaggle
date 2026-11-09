@@ -1,19 +1,23 @@
 """Build cached July-proxy fold matrices for a feature set (same folds as tune_v2.py).
 Usage: python build_fold_cache.py v4   -> outputs/fold_cache_v4.pkl (v3 + purchase-year costs)
-       python build_fold_cache.py v5   -> v4 + Realtor.com listing data"""
+       python build_fold_cache.py v5   -> v4 + Realtor.com listing data
+       v6 = v5 + HUD SAFMR rents, v7 = v5 + Realtor hotness, v8 = v5 + both"""
 import os, sys, pickle, warnings
 os.environ["EXTRA_GEO"] = "1"
 import numpy as np
 from sklearn.model_selection import KFold
 from common import *
 from pipeline import build_matrices, drift_table, dedrift
-from extra_sources import add_realtor
+from extra_sources import add_realtor, add_hud, add_hot
 
 warnings.filterwarnings("ignore")
 NAME = sys.argv[1] if len(sys.argv) > 1 else "v4"
 EXT = {"v3": lambda d: add_irs(add_zillow(add_geo(d))),
        "v4": lambda d: add_hist(add_irs(add_zillow(add_geo(d)))),
-       "v5": lambda d: add_realtor(add_hist(add_irs(add_zillow(add_geo(d)))))}[NAME]
+       "v5": lambda d: add_realtor(add_hist(add_irs(add_zillow(add_geo(d))))),
+       "v6": lambda d: add_hud(add_realtor(add_hist(add_irs(add_zillow(add_geo(d)))))),
+       "v7": lambda d: add_hot(add_realtor(add_hist(add_irs(add_zillow(add_geo(d)))))),
+       "v8": lambda d: add_hot(add_hud(add_realtor(add_hist(add_irs(add_zillow(add_geo(d)))))))}[NAME]
 tr, te, ss = load()
 jun = tr[tr.Month == JUN].set_index("Zip").sort_index()
 jul = te[te.Zip.isin(jun.index)].set_index("Zip").loc[jun.index]; jul[T] = jun[T]
