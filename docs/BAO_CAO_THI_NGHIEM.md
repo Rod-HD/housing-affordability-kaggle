@@ -557,6 +557,53 @@ Chọn **B** vì ít thành phần nhất mà không kém các cấu hình lớn
 
 **Public leaderboard: sub12 = 4,016** (sub11: 4,036, sub10: 4,047). Public giảm 0,020, trong khi CV trên ZIP mới giảm 0,038, tương đương khoảng 0,030 trên điểm tổng (trọng số 0,8). Chiều thay đổi khớp với CV.
 
+## 10j. Nguồn dữ liệu mới: Realtor.com (sub13)
+
+**Phân tích sai số trước khi tìm dữ liệu.** Với blend sub12 trên July-proxy:
+- 23 ZIP không có giá Zillow (0,3%) có RMSE 25,5 và chiếm 10% tổng bình phương sai số.
+- ZIP thiếu RentIndex có RMSE 5,97, so với 4,49 ở ZIP có RentIndex.
+- ZIP có tỷ lệ chủ sở hữu thấp (< 54%) có RMSE 6,0, so với khoảng 4,0 ở các nhóm còn lại.
+- ZIP có ít hộ (SampleSize < 6.200) có RMSE 6,3, so với 3,3 ở nhóm nhiều hộ nhất.
+
+Vì vậy, nguồn cần tìm là dữ liệu giá hoặc tiền thuê phủ được các ZIP Zillow bỏ trống.
+
+**Các nguồn đã thử tải:**
+
+| Nguồn | Kết quả |
+|---|---|
+| Realtor.com Research, Inventory Core Metrics theo ZIP (2016-07 đến 2026-10) | Tải được (840 MB). Phủ 99,9% ZIP train và test |
+| Redfin Data Center theo ZIP | Bị chặn (403) |
+| HUD Small Area FMR FY2026 | Trang gốc trả về rỗng (202), bản lưu trữ bị chặn. Chưa dùng |
+| FHFA HPI theo ZIP5 | Liên kết cũ không còn (404) |
+| Census ZIP Business Patterns | Bị chặn (403) |
+
+**Đặc trưng (`src/build_realtor.py`, `src/extra_sources.py`):**
+- Với mỗi tháng thi, lấy giá trị tháng đó và trung vị 12 tháng trước đó của: giá niêm yết trung vị, giá theo foot vuông, diện tích, số tin đang rao, số ngày rao, tỷ lệ giảm giá. Không dùng tháng nào sau tháng mục tiêu.
+- Tạo thêm: log(giá niêm yết / thu nhập), chênh lệch so với ZHVI, tỷ suất tiền thuê, gánh nặng trả góp ước tính, và giá Zillow được bù bằng giá niêm yết khi Zillow thiếu.
+- Dữ liệu này không chứa nhãn và không được tạo từ nhãn.
+
+**Kết quả trên cùng 5 fold (bộ đặc trưng v5 = v4 + Realtor, 184 đặc trưng):**
+
+| Mô hình | v4 | v5 |
+|---|---|---|
+| LightGBM Huber + trọng số | 5,028 | 4,937 |
+| LightGBM L2 | 5,113 | 4,959 |
+| TabPFN 8 est | 4,655 | 4,513 |
+| TabPFN 32 est | 4,629 | **4,509** |
+
+Phần lớn mức giảm của TabPFN đến từ 23 ZIP không có Zillow: RMSE nhóm này giảm từ 25,7 xuống 19,9. Khi bỏ nhóm này ra, TabPFN 8 est v5 vẫn hơn v4 0,047 (khoảng tin cậy 95%: 0,003 đến 0,092). Trong test chỉ có 3 trên 1.704 ZIP mới thiếu Zillow (0,18%), trong khi July-proxy có 0,34%, nên mức lợi thực tế trên test có thể nhỏ hơn mức đo được trên July-proxy.
+
+**Blend (nested + bootstrap so với công thức sub12):**
+
+| Blend | Nested | Lợi so với sub12 (KTC 95%) | Lợi khi bỏ ZIP thiếu Zillow |
+|---|---|---|---|
+| Công thức sub12 | 4,618 | | |
+| **G: LightGBM v5 + TabPFN32 v5** | **4,501** | +0,115 (0,013 đến 0,246) | +0,023 (−0,019 đến +0,066) |
+| H: G + TabPFN32 v3 | 4,513 | +0,104 | +0,031 (−0,002 đến +0,064) |
+| I: sub12 + TabPFN32 v5 | 4,518 | +0,100 | +0,029 (−0,004 đến +0,061) |
+
+Chọn **G** vì chỉ có 2 thành phần, nested tốt nhất, và chênh lệch in-sample/nested nhỏ nhất (0,003). Trọng số: TabPFN32 v5 0,871, LightGBM v5 0,129. Phần ZIP đã biết giữ nguyên. Thay đổi trung bình so với sub12 trên ZIP mới là 0,87 điểm. ZIP thay đổi nhiều nhất là 64841 (MO), một trong 3 ZIP test thiếu Zillow: từ 50,3 lên 65,1.
+
 ## 11. Hạn chế và hướng phát triển
 - Chưa xác minh metric và luật dữ liệu ngoài, cần đọc tab Overview/Rules.
 - Chỉ có một bước chuyển tháng có nhãn, nên không kiểm định được ngoài thời gian (out-of-time) cho chiến lược ZIP cũ.
