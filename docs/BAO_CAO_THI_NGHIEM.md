@@ -691,6 +691,8 @@ Các tổ hợp được khai báo trước khi có kết quả TabPFN 32 estima
 - So với sub12 trên ZIP mới: sub15 thay đổi trung bình 1,03 điểm (tối đa 18,7, ZIP 64841), sub16 0,74, sub17 0,77. sub15 lệch sub14 trung bình 0,48 điểm.
 - Thử nhưng không dùng: TabDPT, xRFM, TabICL, quantile mapping, FHFA, ACS B25070/91/103.
 
+**Điểm public:** sub15 3,889; sub16 3,885; sub17 3,895. So với sub12 (4,016) tốt hơn khoảng 0,13, phù hợp với CV (khoảng 0,08). So với sub14 có Realtor (3,826) kém 0,06, nằm trong độ nhiễu public (±0,3). Ba bản gần như trùng nhau; khác biệt giữa chúng trên public chỉ là nhiễu.
+
 ### Kỹ thuật
 - Các bộ đặc trưng được gom vào `src/featuresets.py`, dùng chung cho CV và submission.
 - `make_submission_v11.py` lưu cache từng thành phần trong `outputs/sub_parts`.
